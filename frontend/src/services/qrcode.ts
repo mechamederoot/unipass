@@ -47,7 +47,7 @@ class QRCodeService {
         return locationResult;
       }
 
-      // Validar assinatura (simulação - seria implementação real em produção)
+      // Validar assinatura (simula��ão - seria implementação real em produção)
       const signatureResult = this.validateSignature(qrCodeData);
       if (!signatureResult.isValid) {
         return signatureResult;
@@ -262,10 +262,17 @@ class QRCodeService {
    */
   generateSampleQRCodes(): Record<string, string> {
     return {
+      // Academias originais (São Paulo Capital)
       'Smart Fit Paulista': this.generateGymQRCode(1, 'Smart Fit Paulista', -23.5505, -46.6333),
       'Bio Ritmo Faria Lima': this.generateGymQRCode(2, 'Bio Ritmo Faria Lima', -23.5729, -46.6899),
       'Academia Central': this.generateGymQRCode(3, 'Academia Central', -23.5489, -46.6388),
-      'Bodytech Vila Olímpia': this.generateGymQRCode(4, 'Bodytech Vila Olímpia', -23.5955, -46.6814)
+      'Bodytech Vila Olímpia': this.generateGymQRCode(4, 'Bodytech Vila Olímpia', -23.5955, -46.6814),
+
+      // Academias locais (ABC Paulista)
+      'Academia Espírito Santo': this.generateGymQRCode(5, 'Academia Espírito Santo', -23.6181, -46.5564),
+      'Fitness Senhor do Bonfim': this.generateGymQRCode(6, 'Fitness Senhor do Bonfim', -23.6675, -46.4611),
+      'PowerGym Santo André': this.generateGymQRCode(7, 'PowerGym Santo André', -23.6739, -46.5391),
+      'Fit Center ABC': this.generateGymQRCode(8, 'Fit Center ABC', -23.6089, -46.5477)
     };
   }
 }
