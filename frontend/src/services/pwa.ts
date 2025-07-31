@@ -77,7 +77,7 @@ class PWAService {
     }
 
     // Check for iOS Safari
-    if (window.navigator.standalone) {
+    if ((window.navigator as any).standalone) {
       this.isInstalled = true;
       return;
     }
