@@ -45,7 +45,7 @@ const SubscriptionPlans: React.FC = () => {
 
   useEffect(() => {
     loadPlansAndSubscription();
-  }, [isAuthenticated]);
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPlansAndSubscription = async () => {
     setIsLoading(true);
