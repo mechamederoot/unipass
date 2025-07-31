@@ -59,7 +59,7 @@ const AdminPanel: React.FC = () => {
 
   useEffect(() => {
     loadAdminData();
-  }, [activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAdminData = async () => {
     setIsLoading(true);
