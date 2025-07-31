@@ -256,6 +256,18 @@ class QRCodeService {
       gymName: parsed.gymName
     };
   }
+
+  /**
+   * Gera QR codes de exemplo para testes
+   */
+  generateSampleQRCodes(): Record<string, string> {
+    return {
+      'Smart Fit Paulista': this.generateGymQRCode(1, 'Smart Fit Paulista', -23.5505, -46.6333),
+      'Bio Ritmo Faria Lima': this.generateGymQRCode(2, 'Bio Ritmo Faria Lima', -23.5729, -46.6899),
+      'Academia Central': this.generateGymQRCode(3, 'Academia Central', -23.5489, -46.6388),
+      'Bodytech Vila Olímpia': this.generateGymQRCode(4, 'Bodytech Vila Olímpia', -23.5955, -46.6814)
+    };
+  }
 }
 
 export const qrCodeService = new QRCodeService();
