@@ -45,7 +45,7 @@ interface PointHistoryEntry {
 }
 
 const Gamification: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'achievements' | 'leaderboard' | 'history'>('overview');
   const [userPoints, setUserPoints] = useState<UserPoints | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
