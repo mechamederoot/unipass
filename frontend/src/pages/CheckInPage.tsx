@@ -447,6 +447,13 @@ const CheckInPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* QR Scanner Modal */}
+        <QRScanner
+          isOpen={showQRScanner}
+          onScan={handleQRScan}
+          onClose={() => setShowQRScanner(false)}
+        />
       </div>
     </div>
   );
