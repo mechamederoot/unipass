@@ -55,7 +55,7 @@ const AdminPanel: React.FC = () => {
   const [gyms, setGyms] = useState<GymAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [, ] = useState(1);
 
   useEffect(() => {
     loadAdminData();
