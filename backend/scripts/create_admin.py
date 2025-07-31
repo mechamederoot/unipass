@@ -57,11 +57,11 @@ def create_admin_user():
         db.refresh(admin_user)
         
         # Criar role de super admin
-        admin_role = UserRole(
+        admin_role = AdminUser(
             user_id=admin_user.id,
-            role="super_admin",
-            permissions=["all"],
-            created_at=datetime.utcnow()
+            role=UserRole.SUPER_ADMIN,
+            permissions='["all"]',
+            is_active=True
         )
         
         db.add(admin_role)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     create_admin_user()
     print("\n" + "=" * 50)
     create_sample_gyms()
-    print("\n🎉 Inicialização concluída!")
+    print("\n��� Inicialização concluída!")
     print("\n📋 Credenciais de acesso:")
     print("👤 Admin: admin@unipass.com / admin123")
     print("👤 Dev: dev@unipass.com / dev123")
