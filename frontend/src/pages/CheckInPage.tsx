@@ -1,56 +1,103 @@
-import React, { useState } from 'react';
-import { QrCode, MapPin, Clock, Check, AlertCircle, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { QrCode, MapPin, Clock, Check, AlertCircle, Search, Star, Users, Loader } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
+import { locationService } from '../services/location';
+import LocationPermission from '../components/LocationPermission';
 
 interface Gym {
-  id: string;
+  id: number;
   name: string;
   address: string;
-  distance: string;
-  isOpen: boolean;
-  openHours: string;
+  distance?: number;
+  rating: number;
+  is_open_now: boolean;
+  current_occupancy: number;
+  max_capacity: number;
+  occupancy_percentage: number;
 }
 
 const CheckInPage: React.FC = () => {
-  const [checkInMethod, setCheckInMethod] = useState<'qr' | 'search'>('qr');
+  const { user } = useAuth();
+  const {
+    gyms,
+    activeCheckin,
+    createCheckin,
+    checkout,
+    searchGyms,
+    userLocation,
+    requestLocation,
+    isLoadingCheckin,
+    refreshGyms
+  } = useApp();
+
+  const [checkInMethod, setCheckInMethod] = useState<'qr' | 'search'>('search');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkedInGym, setCheckedInGym] = useState<Gym | null>(null);
+  const [searchResults, setSearchResults] = useState<Gym[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState('');
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
-  const nearbyGyms: Gym[] = [
-    {
-      id: '1',
-      name: 'Smart Fit Centro',
-      address: 'Rua das Flores, 123 - Centro',
-      distance: '0.5 km',
-      isOpen: true,
-      openHours: '6h às 22h'
-    },
-    {
-      id: '2',
-      name: 'Academia Forma',
-      address: 'Av. Paulista, 456 - Bela Vista',
-      distance: '1.2 km',
-      isOpen: true,
-      openHours: '24 horas'
-    },
-    {
-      id: '3',
-      name: 'Bio Ritmo',
-      address: 'Rua Augusta, 789 - Consolação',
-      distance: '1.8 km',
-      isOpen: false,
-      openHours: '6h às 20h'
+  // Check for location on component mount
+  useEffect(() => {
+    const checkLocation = async () => {
+      if (!userLocation) {
+        const stored = locationService.loadStoredLocation();
+        if (!stored) {
+          setShowLocationPrompt(true);
+        }
+      }
+    };
+    checkLocation();
+  }, [userLocation]);
+
+  // Refresh gyms when location changes
+  useEffect(() => {
+    if (userLocation) {
+      refreshGyms();
+      setShowLocationPrompt(false);
     }
-  ];
+  }, [userLocation, refreshGyms]);
 
-  const handleCheckIn = (gym: Gym) => {
-    setCheckedInGym(gym);
-    setIsCheckedIn(true);
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const results = await searchGyms(query);
+      setSearchResults(results);
+    } catch (err) {
+      console.error('Error searching gyms:', err);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const handleCheckOut = () => {
-    setIsCheckedIn(false);
-    setCheckedInGym(null);
+  const handleCheckIn = async (gym: Gym) => {
+    setError('');
+    try {
+      await createCheckin(gym.id);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    if (!activeCheckin) return;
+
+    setError('');
+    try {
+      await checkout(activeCheckin.id);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleLocationGranted = (location: { latitude: number; longitude: number }) => {
+    setShowLocationPrompt(false);
   };
 
   const filteredGyms = nearbyGyms.filter(gym =>
