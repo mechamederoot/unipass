@@ -81,7 +81,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose, isOpen }) => {
       if (videoRef.current) {
         scannerRef.current = new QrScanner(
           videoRef.current,
-          (result) => {
+          (result: any) => {
             onScan(result.data);
             stopScanner();
           },
