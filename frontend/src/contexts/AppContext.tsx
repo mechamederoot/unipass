@@ -150,7 +150,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
       }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refreshGyms = async () => {
     setIsLoadingGyms(true);
