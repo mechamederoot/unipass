@@ -40,7 +40,7 @@ interface GymAdmin {
   owner_name: string;
   owner_email: string;
   total_members: number;
-  revenue_monthly: float;
+  revenue_monthly: number;
 }
 
 const AdminPanel: React.FC = () => {
