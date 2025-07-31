@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Clock, Calendar, Edit3, Award, Activity, TrendingUp, Target, Star } from 'lucide-react';
+import { User, Mail, Phone, Clock, Edit3, Award, Activity, TrendingUp, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { BarChart, PieChart, LineChart } from '../components/Charts';
