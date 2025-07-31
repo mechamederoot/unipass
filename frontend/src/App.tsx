@@ -14,7 +14,7 @@ import GymDashboard from './pages/GymDashboard';
 import AdminPanel from './pages/AdminPanel';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
-import LoadingSpinner from './components/LoadingSpinner';
+
 import InstallPrompt from './components/InstallPrompt';
 import './index.css';
 
