@@ -145,6 +145,8 @@ const CheckInPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Erro ao processar QR Code');
       HapticFeedback.error();
+    } finally {
+      setIsLoading(false);
     }
   };
 
