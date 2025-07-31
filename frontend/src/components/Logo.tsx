@@ -1,13 +1,19 @@
 import React from 'react';
-import { Shield, Zap } from 'lucide-react';
+import { Activity, Users, ChevronRight } from 'lucide-react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   className?: string;
+  variant?: 'default' | 'white' | 'dark';
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '' }) => {
+const Logo: React.FC<LogoProps> = ({ 
+  size = 'md', 
+  showText = true, 
+  className = '', 
+  variant = 'default' 
+}) => {
   const sizeClasses = {
     sm: 'h-8 w-8',
     md: 'h-12 w-12',
@@ -20,21 +26,69 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, className = '
     lg: 'text-4xl'
   };
 
+  const getLogoColors = () => {
+    switch (variant) {
+      case 'white':
+        return {
+          bg: 'bg-white',
+          text: 'text-gray-800',
+          icon: 'text-primary-600',
+          accent: 'text-accent-500'
+        };
+      case 'dark':
+        return {
+          bg: 'bg-gray-900',
+          text: 'text-white',
+          icon: 'text-primary-400',
+          accent: 'text-accent-400'
+        };
+      default:
+        return {
+          bg: 'bg-gradient-to-br from-primary-500 to-primary-700',
+          text: 'bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent',
+          icon: 'text-white',
+          accent: 'text-accent-300'
+        };
+    }
+  };
+
+  const colors = getLogoColors();
+
   return (
     <div className={`flex items-center gap-3 ${className}`}>
+      {/* Logo Icon */}
       <div className={`${sizeClasses[size]} relative flex items-center justify-center`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl rotate-6 opacity-90"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-400 to-accent-600 rounded-xl -rotate-6 opacity-80"></div>
-        <div className="relative z-10 bg-white rounded-lg p-2 shadow-lg">
-          <div className="relative">
-            <Shield className="h-full w-full text-primary-600" />
-            <Zap className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-1/2 w-1/2 text-accent-500" />
+        {/* Main circle with gradient */}
+        <div className={`absolute inset-0 ${colors.bg} rounded-2xl shadow-xl transform transition-transform duration-300 hover:scale-105`}>
+          {/* Inner geometric pattern */}
+          <div className="absolute inset-2 border-2 border-white/30 rounded-xl"></div>
+          <div className="absolute inset-4 border border-white/20 rounded-lg"></div>
+        </div>
+        
+        {/* Center icon composition */}
+        <div className="relative z-10 flex items-center justify-center">
+          {/* Main activity icon */}
+          <Activity className={`h-1/2 w-1/2 ${colors.icon} stroke-[2.5]`} />
+          {/* Small accent elements */}
+          <div className="absolute -top-1 -right-1">
+            <div className={`w-2 h-2 ${colors.accent} rounded-full opacity-80`}></div>
+          </div>
+          <div className="absolute -bottom-1 -left-1">
+            <Users className={`h-3 w-3 ${colors.accent} opacity-60`} />
           </div>
         </div>
       </div>
+
+      {/* Brand Text */}
       {showText && (
-        <div className={`font-bold ${textSizeClasses[size]} bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent`}>
-          Unipass
+        <div className="flex items-center">
+          <div className={`font-bold ${textSizeClasses[size]} ${colors.text} tracking-tight`}>
+            Uni
+            <span className="text-accent-500">pass</span>
+          </div>
+          {size !== 'sm' && (
+            <ChevronRight className="h-4 w-4 text-accent-500 ml-1 opacity-60" />
+          )}
         </div>
       )}
     </div>
