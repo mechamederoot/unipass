@@ -24,6 +24,7 @@ export interface GymDetails extends Gym {
   amenities_list: string[];
   description: string;
   total_reviews: number;
+  images: string[];
 }
 
 interface CheckIn {
