@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Zap, MapPin, Users, Clock, CheckCircle } from 'lucide-react';
+import { MapPin, Users, Clock, CheckCircle } from 'lucide-react';
 import Logo from '../components/Logo';
 
 const Homepage: React.FC = () => {
