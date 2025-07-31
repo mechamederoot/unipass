@@ -75,16 +75,22 @@ const Gamification: React.FC = () => {
   };
 
   const loadUserPoints = async () => {
-    // Mock data - replace with actual API call
-    const mockPoints: UserPoints = {
-      total_points: 1250,
-      level: 8,
-      current_streak: 12,
-      longest_streak: 28,
-      points_to_next_level: 150,
-      last_checkin_date: "2024-07-31T10:30:00Z"
-    };
-    setUserPoints(mockPoints);
+    try {
+      const points = await apiService.getUserPoints();
+      setUserPoints(points);
+    } catch (error) {
+      console.error('Erro ao carregar pontos:', error);
+      // Fallback para dados básicos em caso de erro
+      const fallbackPoints: UserPoints = {
+        total_points: 0,
+        level: 1,
+        current_streak: 0,
+        longest_streak: 0,
+        points_to_next_level: 100,
+        last_checkin_date: new Date().toISOString()
+      };
+      setUserPoints(fallbackPoints);
+    }
   };
 
   const loadAchievements = async () => {
@@ -223,7 +229,7 @@ const Gamification: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="Carregando gamificação..." />;
+    return <LoadingSpinner message="Carregando gamifica��ão..." />;
   }
 
   return (
