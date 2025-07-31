@@ -119,7 +119,7 @@ class Payment(Base):
     payment_date = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     description = Column(String(200))
-    metadata = Column(Text)  # JSON string for additional payment data
+    payment_metadata = Column(Text)  # JSON string for additional payment data
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
