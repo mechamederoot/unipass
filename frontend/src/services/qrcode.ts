@@ -161,11 +161,12 @@ class QRCodeService {
 
       // Calcular distância
       const distance = locationService.calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        qrCodeData.coordinates.latitude,
-        qrCodeData.coordinates.longitude
-      );
+        userLocation,
+        {
+          latitude: qrCodeData.coordinates.latitude,
+          longitude: qrCodeData.coordinates.longitude
+        }
+      ) * 1000; // Convert to meters
 
       // Verificar se está dentro do raio permitido
       if (distance > this.MAX_DISTANCE_METERS) {
