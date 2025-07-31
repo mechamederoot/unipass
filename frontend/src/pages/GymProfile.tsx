@@ -19,7 +19,7 @@ const GymProfile: React.FC = () => {
 
   const [gymData, setGymData] = useState<GymDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAllImages, setShowAllImages] = useState(false);
+
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [error, setError] = useState('');
 
