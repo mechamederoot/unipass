@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Star, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import RatingStars from './RatingStars';
 
 interface ReviewModalProps {
