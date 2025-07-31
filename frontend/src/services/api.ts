@@ -34,7 +34,7 @@ class ApiService {
         if (error.response?.status === 401) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          // Let React Router handle the redirect instead of forcing it
         }
         return Promise.reject(error);
       }
