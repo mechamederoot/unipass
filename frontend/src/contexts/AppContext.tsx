@@ -15,7 +15,7 @@ interface Gym {
   occupancy_percentage: number;
 }
 
-interface GymDetails extends Gym {
+export interface GymDetails extends Gym {
   phone: string;
   latitude: number;
   longitude: number;
