@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, Building2, CreditCard, TrendingUp, AlertTriangle, 
-  Search, Filter, Plus, Settings, Eye, Ban, CheckCircle,
+import {
+  Users, Building2, TrendingUp, AlertTriangle,
+  Search, Plus, Settings, Eye, Ban, CheckCircle,
   DollarSign, Activity
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
