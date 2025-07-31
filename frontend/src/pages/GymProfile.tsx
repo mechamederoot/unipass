@@ -7,6 +7,8 @@ import FavoriteButton from '../components/FavoriteButton';
 import RatingStars from '../components/RatingStars';
 import ReviewModal from '../components/ReviewModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ShareButton from '../components/ShareButton';
+import HapticFeedback from '../utils/haptic';
 
 interface GymData {
   id: string;
@@ -70,15 +72,20 @@ const GymProfile: React.FC = () => {
     if (!gymData || !isAuthenticated) return;
 
     setError('');
+    HapticFeedback.medium();
+
     try {
       await createCheckin(gymData.id);
+      HapticFeedback.checkinSuccess();
     } catch (err: any) {
       setError(err.message);
+      HapticFeedback.error();
     }
   };
 
   const handleReviewSubmit = async (review: { rating: number; comment: string }) => {
     setShowReviewModal(false);
+    HapticFeedback.success();
     // TODO: Implement review submission to backend
     console.log('Review submitted:', review);
   };
@@ -147,7 +154,15 @@ const GymProfile: React.FC = () => {
                   <h1 className="text-3xl font-bold text-gray-900">
                     {gymData.name}
                   </h1>
-                  <FavoriteButton gymId={gymData.id} size="lg" />
+                  <div className="flex items-center space-x-2">
+                    <ShareButton
+                      title={`${gymData.name} - Unipass`}
+                      text={`Confira a ${gymData.name} no Unipass!`}
+                      variant="secondary"
+                      size="md"
+                    />
+                    <FavoriteButton gymId={gymData.id} size="lg" />
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-4 text-gray-600 mb-3">
