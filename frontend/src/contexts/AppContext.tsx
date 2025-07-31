@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { apiService } from '../services/api';
+import { notificationService } from '../services/notifications';
 import { useAuth } from './AuthContext';
 
 interface Gym {
@@ -127,8 +128,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       refreshCheckins();
       refreshStats();
       checkActiveCheckin();
+
+      // Request notification permission
+      notificationService.requestPermission();
+
+      // Show welcome notification for new users
+      if (user?.created_at) {
+        const createdDate = new Date(user.created_at);
+        const now = new Date();
+        const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+
+        // Show welcome notification if user registered in the last day
+        if (daysDiff < 1) {
+          setTimeout(() => {
+            notificationService.showWelcomeNotification(user.name);
+          }, 2000);
+        }
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const refreshGyms = async () => {
     setIsLoadingGyms(true);
@@ -205,6 +223,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     try {
       const checkin = await apiService.createCheckin(gymId);
       setActiveCheckin(checkin);
+
+      // Find gym name for notification
+      const gym = gyms.find(g => g.id === gymId);
+      const gymName = gym?.name || 'Academia';
+
+      // Show success notification
+      notificationService.showCheckinSuccess(gymName);
+
       refreshCheckins();
       refreshStats();
       refreshGyms(); // Update occupancy
