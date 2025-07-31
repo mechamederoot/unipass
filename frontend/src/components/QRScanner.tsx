@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, AlertCircle, Camera, CameraOff } from 'lucide-react';
 
 interface QRScannerProps {
