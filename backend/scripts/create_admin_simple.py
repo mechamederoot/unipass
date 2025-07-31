@@ -55,11 +55,11 @@ def create_admin():
             db.refresh(admin_user)
             
             # Criar role de super admin
-            admin_role = UserRole(
+            admin_role = AdminUser(
                 user_id=admin_user.id,
-                role="super_admin",
-                permissions=["all"],
-                created_at=datetime.utcnow()
+                role=UserRole.SUPER_ADMIN,
+                permissions='["all"]',  # JSON string
+                is_active=True
             )
             
             db.add(admin_role)
