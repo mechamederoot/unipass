@@ -31,7 +31,7 @@ const CheckInPage: React.FC = () => {
     checkout,
     searchGyms,
     userLocation,
-    requestLocation,
+
     isLoadingCheckin,
     refreshGyms
   } = useApp();
