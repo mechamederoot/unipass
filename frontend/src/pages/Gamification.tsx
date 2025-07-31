@@ -10,7 +10,7 @@ interface UserPoints {
   current_streak: number;
   longest_streak: number;
   points_to_next_level: number;
-  last_checkin_date: string | null;
+  last_checkin_date: string;
 }
 
 interface Achievement {
@@ -32,31 +32,32 @@ interface LeaderboardEntry {
   user_id: number;
   name: string;
   points: number;
-  level: number | null;
+  level: number;
   is_current_user: boolean;
 }
 
 interface PointHistoryEntry {
   id: number;
-  points_change: number;
-  reason: string;
+  points: number;
+  action: string;
   description: string;
   created_at: string;
 }
 
 const Gamification: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const { user, isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState<'overview' | 'achievements' | 'leaderboard' | 'history'>('overview');
   const [userPoints, setUserPoints] = useState<UserPoints | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [pointHistory, setPointHistory] = useState<PointHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [leaderboardPeriod, setLeaderboardPeriod] = useState('all_time');
 
   useEffect(() => {
-    loadGamificationData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isAuthenticated) {
+      loadGamificationData();
+    }
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadGamificationData = async () => {
     setIsLoading(true);
@@ -80,472 +81,354 @@ const Gamification: React.FC = () => {
       setUserPoints(points);
     } catch (error) {
       console.error('Erro ao carregar pontos:', error);
-      // Fallback para dados básicos em caso de erro
-      const fallbackPoints: UserPoints = {
+      // Fallback para dados básicos
+      setUserPoints({
         total_points: 0,
         level: 1,
         current_streak: 0,
         longest_streak: 0,
         points_to_next_level: 100,
         last_checkin_date: new Date().toISOString()
-      };
-      setUserPoints(fallbackPoints);
+      });
     }
   };
 
   const loadAchievements = async () => {
-    // Mock data - replace with actual API call
-    const mockAchievements: Achievement[] = [
-      {
-        id: 1,
-        name: "Primeiro Check-in",
-        description: "Faça seu primeiro check-in em uma academia",
-        icon: "first-checkin",
-        points_reward: 10,
-        condition_type: "CHECKIN_COUNT",
-        condition_value: 1,
-        is_earned: true,
-        earned_at: "2024-01-15T10:30:00Z",
-        progress: 1,
-        progress_percentage: 100
-      },
-      {
-        id: 2,
-        name: "Frequentador Assíduo",
-        description: "Faça check-in por 7 dias consecutivos",
-        icon: "streak-7",
-        points_reward: 50,
-        condition_type: "STREAK_DAYS",
-        condition_value: 7,
-        is_earned: true,
-        earned_at: "2024-02-20T14:15:00Z",
-        progress: 7,
-        progress_percentage: 100
-      },
-      {
-        id: 3,
-        name: "Explorador",
-        description: "Visite 10 academias diferentes",
-        icon: "explorer",
-        points_reward: 100,
-        condition_type: "UNIQUE_GYMS",
-        condition_value: 10,
-        is_earned: false,
-        earned_at: null,
-        progress: 7,
-        progress_percentage: 70
-      },
-      {
-        id: 4,
-        name: "Maratonista",
-        description: "Complete 100 check-ins",
-        icon: "marathon",
-        points_reward: 200,
-        condition_type: "CHECKIN_COUNT",
-        condition_value: 100,
-        is_earned: false,
-        earned_at: null,
-        progress: 67,
-        progress_percentage: 67
-      },
-      {
-        id: 5,
-        name: "Dedicação Total",
-        description: "Mantenha uma sequência de 30 dias",
-        icon: "dedication",
-        points_reward: 300,
-        condition_type: "STREAK_DAYS",
-        condition_value: 30,
-        is_earned: false,
-        earned_at: null,
-        progress: 12,
-        progress_percentage: 40
-      }
-    ];
-    setAchievements(mockAchievements);
+    try {
+      const achievements = await apiService.getUserAchievements();
+      setAchievements(achievements.unlocked || []);
+    } catch (error) {
+      console.error('Erro ao carregar conquistas:', error);
+      setAchievements([]);
+    }
   };
 
   const loadLeaderboard = async () => {
-    // Mock data - replace with actual API call
-    const mockLeaderboard: LeaderboardEntry[] = [
-      { position: 1, user_id: 101, name: "Ana Silva", points: 2340, level: 15, is_current_user: false },
-      { position: 2, user_id: 102, name: "Carlos Santos", points: 2156, level: 14, is_current_user: false },
-      { position: 3, user_id: 103, name: "Maria Costa", points: 1987, level: 13, is_current_user: false },
-      { position: 4, user_id: 104, name: "Pedro Lima", points: 1834, level: 12, is_current_user: false },
-      { position: 5, user_id: 105, name: user?.name || "Você", points: 1250, level: 8, is_current_user: true },
-      { position: 6, user_id: 106, name: "Julia Fernandes", points: 1123, level: 7, is_current_user: false }
-    ];
-    setLeaderboard(mockLeaderboard);
+    try {
+      const leaderboard = await apiService.getLeaderboard('monthly');
+      setLeaderboard(leaderboard.monthly || []);
+    } catch (error) {
+      console.error('Erro ao carregar leaderboard:', error);
+      setLeaderboard([]);
+    }
   };
 
   const loadPointHistory = async () => {
-    // Mock data - replace with actual API call
-    const mockHistory: PointHistoryEntry[] = [
-      {
-        id: 1,
-        points_change: 15,
-        reason: "CHECKIN",
-        description: "Check-in points + streak bonus",
-        created_at: "2024-07-31T10:30:00Z"
-      },
-      {
-        id: 2,
-        points_change: 50,
-        reason: "ACHIEVEMENT",
-        description: "Achievement unlocked: Frequentador Assíduo",
-        created_at: "2024-07-30T18:45:00Z"
-      },
-      {
-        id: 3,
-        points_change: 10,
-        reason: "CHECKIN",
-        description: "Check-in points + streak bonus",
-        created_at: "2024-07-30T07:15:00Z"
-      }
-    ];
-    setPointHistory(mockHistory);
-  };
-
-  const getAchievementIcon = (iconName: string) => {
-    const iconMap: { [key: string]: React.ReactNode } = {
-      'first-checkin': <Target className="h-8 w-8" />,
-      'streak-7': <Calendar className="h-8 w-8" />,
-      'explorer': <Star className="h-8 w-8" />,
-      'marathon': <Trophy className="h-8 w-8" />,
-      'dedication': <Crown className="h-8 w-8" />
-    };
-    return iconMap[iconName] || <Award className="h-8 w-8" />;
-  };
-
-  const getPositionIcon = (position: number) => {
-    if (position === 1) return <Crown className="h-6 w-6 text-yellow-500" />;
-    if (position === 2) return <Medal className="h-6 w-6 text-gray-400" />;
-    if (position === 3) return <Medal className="h-6 w-6 text-amber-600" />;
-    return <span className="text-lg font-bold text-gray-600">#{position}</span>;
+    try {
+      const history = await apiService.getPointHistory();
+      setPointHistory(history || []);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      setPointHistory([]);
+    }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
+  const getAchievementIcon = (iconName: string) => {
+    const icons = {
+      'first-checkin': <Award className="h-6 w-6" />,
+      'streak-7': <Zap className="h-6 w-6" />,
+      'explorer': <Target className="h-6 w-6" />,
+      'marathon': <Trophy className="h-6 w-6" />,
+      'dedication': <Crown className="h-6 w-6" />
+    };
+    return icons[iconName as keyof typeof icons] || <Medal className="h-6 w-6" />;
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
+          <p className="text-gray-600">Faça login para ver sua gamificação</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return <LoadingSpinner message="Carregando gamifica��ão..." />;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen-safe bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <Trophy className="h-16 w-16 mx-auto mb-4 text-yellow-300" />
-            <h1 className="text-4xl font-bold mb-4">Sistema de Pontos</h1>
-            <p className="text-xl text-primary-100">
-              Conquiste pontos, desbloqueie conquistas e compete com outros usuários!
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gamificação</h1>
+          <p className="text-gray-600">Acompanhe seu progresso e conquistas</p>
+        </div>
 
-          {userPoints && (
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{userPoints.total_points.toLocaleString()}</div>
-                <div className="text-primary-200 text-sm">Total de Pontos</div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">Nível {userPoints.level}</div>
-                <div className="text-primary-200 text-sm">{userPoints.points_to_next_level} para próximo</div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{userPoints.current_streak}</div>
-                <div className="text-primary-200 text-sm">Sequência Atual</div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">{userPoints.longest_streak}</div>
-                <div className="text-primary-200 text-sm">Melhor Sequência</div>
+        {/* User Stats Overview */}
+        {userPoints && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total de Pontos</p>
+                  <p className="text-2xl font-bold text-primary-600">{userPoints.total_points.toLocaleString()}</p>
+                </div>
+                <Star className="h-8 w-8 text-yellow-500" />
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'overview', name: 'Visão Geral', icon: TrendingUp },
-              { id: 'achievements', name: 'Conquistas', icon: Trophy },
-              { id: 'leaderboard', name: 'Ranking', icon: Users },
-              { id: 'history', name: 'Histórico', icon: Calendar }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
-              >
-                <tab.icon size={20} className="mr-2" />
-                {tab.name}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* Level Progress */}
-            {userPoints && (
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Progresso do Nível</h3>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Nível {userPoints.level}</span>
-                  <span className="text-sm text-gray-500">Nível {userPoints.level + 1}</span>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Nível</p>
+                  <p className="text-2xl font-bold text-primary-600">{userPoints.level}</p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                  <div
-                    className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${((userPoints.level * 100 - userPoints.points_to_next_level) / (userPoints.level * 100)) * 100}%` 
-                    }}
-                  />
+                <Trophy className="h-8 w-8 text-primary-600" />
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Sequência Atual</p>
+                  <p className="text-2xl font-bold text-orange-600">{userPoints.current_streak} dias</p>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Faltam {userPoints.points_to_next_level} pontos para o próximo nível
-                </p>
+                <Zap className="h-8 w-8 text-orange-500" />
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Próximo Nível</p>
+                  <p className="text-2xl font-bold text-green-600">{userPoints.points_to_next_level}</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-xl shadow-sm mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {[
+                { id: 'overview', label: 'Visão Geral', icon: <TrendingUp className="h-5 w-5" /> },
+                { id: 'achievements', label: 'Conquistas', icon: <Award className="h-5 w-5" /> },
+                { id: 'leaderboard', label: 'Ranking', icon: <Trophy className="h-5 w-5" /> },
+                { id: 'history', label: 'Histórico', icon: <Calendar className="h-5 w-5" /> }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="p-6">
+            {/* Overview Tab */}
+            {activeTab === 'overview' && userPoints && (
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-primary-900 mb-4">Progresso do Nível</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Nível {userPoints.level}</span>
+                        <span>Nível {userPoints.level + 1}</span>
+                      </div>
+                      <div className="w-full bg-primary-200 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${Math.max(10, 100 - (userPoints.points_to_next_level / 100) * 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-primary-700 text-center">
+                        {userPoints.points_to_next_level} pontos para o próximo nível
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-orange-900 mb-4">Sequência</h3>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-orange-600 mb-2">{userPoints.current_streak}</div>
+                      <p className="text-orange-700">dias consecutivos</p>
+                      <p className="text-sm text-orange-600 mt-2">
+                        Recorde: {userPoints.longest_streak} dias
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Recent Achievements */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Conquistas Recentes</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                {achievements.filter(a => a.is_earned).slice(0, 4).map((achievement) => (
-                  <div key={achievement.id} className="flex items-center p-3 bg-green-50 rounded-lg">
-                    <div className="bg-green-100 text-green-600 p-2 rounded-lg mr-4">
-                      {getAchievementIcon(achievement.icon)}
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{achievement.name}</h4>
-                      <p className="text-sm text-gray-600">+{achievement.points_reward} pontos</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="card text-center">
-                <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  {achievements.filter(a => a.is_earned).length}
-                </div>
-                <div className="text-sm text-gray-600">Conquistas Desbloqueadas</div>
-              </div>
-              
-              <div className="card text-center">
-                <Target className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  {achievements.filter(a => !a.is_earned).length}
-                </div>
-                <div className="text-sm text-gray-600">Conquistas Restantes</div>
-              </div>
-              
-              <div className="card text-center">
-                <Users className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">
-                  #{leaderboard.find(l => l.is_current_user)?.position || 'N/A'}
-                </div>
-                <div className="text-sm text-gray-600">Posição no Ranking</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'achievements' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Conquistas</h2>
-              <div className="text-sm text-gray-600">
-                {achievements.filter(a => a.is_earned).length} de {achievements.length} desbloqueadas
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {achievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className={`card transition-all duration-300 ${
-                    achievement.is_earned
-                      ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'
-                      : 'hover:shadow-lg'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-lg ${
-                      achievement.is_earned
-                        ? 'bg-green-200 text-green-700'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      {getAchievementIcon(achievement.icon)}
-                    </div>
-                    {achievement.is_earned && (
-                      <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                        Desbloqueada
+            {/* Achievements Tab */}
+            {activeTab === 'achievements' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Suas Conquistas</h3>
+                {achievements.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {achievements.map((achievement) => (
+                      <div
+                        key={achievement.id}
+                        className={`rounded-lg border-2 p-4 transition-all ${
+                          achievement.is_earned
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-gray-200 bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className={`rounded-full p-2 ${
+                            achievement.is_earned ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                          }`}>
+                            {getAchievementIcon(achievement.icon)}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{achievement.name}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{achievement.description}</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-primary-600">
+                                +{achievement.points_reward} pontos
+                              </span>
+                              {achievement.is_earned ? (
+                                <span className="text-xs text-green-600">✓ Conquistado</span>
+                              ) : (
+                                <span className="text-xs text-gray-500">
+                                  {achievement.progress_percentage}% completo
+                                </span>
+                              )}
+                            </div>
+                            {!achievement.is_earned && (
+                              <div className="mt-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-primary-500 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${achievement.progress_percentage}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-
-                  <h3 className={`font-semibold mb-2 ${
-                    achievement.is_earned ? 'text-green-900' : 'text-gray-900'
-                  }`}>
-                    {achievement.name}
-                  </h3>
-                  
-                  <p className={`text-sm mb-4 ${
-                    achievement.is_earned ? 'text-green-700' : 'text-gray-600'
-                  }`}>
-                    {achievement.description}
-                  </p>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className={`font-medium ${
-                      achievement.is_earned ? 'text-green-700' : 'text-gray-600'
-                    }`}>
-                      +{achievement.points_reward} pontos
-                    </span>
-                    {achievement.is_earned ? (
-                      <span className="text-green-600 text-xs">
-                        {formatDate(achievement.earned_at!)}
-                      </span>
-                    ) : (
-                      <span className="text-gray-500 text-xs">
-                        {achievement.progress}/{achievement.condition_value}
-                      </span>
-                    )}
+                ) : (
+                  <div className="text-center py-8">
+                    <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhuma conquista ainda. Comece fazendo check-ins!</p>
                   </div>
+                )}
+              </div>
+            )}
 
-                  {!achievement.is_earned && (
-                    <div className="mt-3">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${achievement.progress_percentage}%` }}
-                        />
+            {/* Leaderboard Tab */}
+            {activeTab === 'leaderboard' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Ranking Mensal</h3>
+                {leaderboard.length > 0 ? (
+                  <div className="space-y-2">
+                    {leaderboard.map((entry) => (
+                      <div
+                        key={entry.user_id}
+                        className={`flex items-center justify-between p-4 rounded-lg ${
+                          entry.is_current_user
+                            ? 'bg-primary-50 border-2 border-primary-200'
+                            : 'bg-white border border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                            entry.position === 1 ? 'bg-yellow-100 text-yellow-600' :
+                            entry.position === 2 ? 'bg-gray-100 text-gray-600' :
+                            entry.position === 3 ? 'bg-orange-100 text-orange-600' :
+                            'bg-gray-50 text-gray-500'
+                          }`}>
+                            {entry.position === 1 && <Crown className="h-4 w-4" />}
+                            {entry.position === 2 && <Medal className="h-4 w-4" />}
+                            {entry.position === 3 && <Award className="h-4 w-4" />}
+                            {entry.position > 3 && <span className="text-sm font-medium">{entry.position}</span>}
+                          </div>
+                          <div>
+                            <p className={`font-medium ${entry.is_current_user ? 'text-primary-900' : 'text-gray-900'}`}>
+                              {entry.name}
+                              {entry.is_current_user && <span className="text-primary-600 ml-2">(Você)</span>}
+                            </p>
+                            <p className="text-sm text-gray-500">Nível {entry.level}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">{entry.points.toLocaleString()}</p>
+                          <p className="text-sm text-gray-500">pontos</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {Math.round(achievement.progress_percentage)}% completo
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Ranking ainda não disponível</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-        {activeTab === 'leaderboard' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Ranking de Pontos</h2>
-              <select
-                value={leaderboardPeriod}
-                onChange={(e) => setLeaderboardPeriod(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="all_time">Todos os Tempos</option>
-                <option value="monthly">Este Mês</option>
-                <option value="weekly">Esta Semana</option>
-              </select>
-            </div>
-
-            <div className="card">
-              <div className="space-y-4">
-                {leaderboard.map((entry) => (
-                  <div
-                    key={entry.user_id}
-                    className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                      entry.is_current_user
-                        ? 'bg-primary-50 border-2 border-primary-200'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center justify-center w-10 h-10">
-                        {getPositionIcon(entry.position)}
-                      </div>
-                      <div>
-                        <h3 className={`font-medium ${
-                          entry.is_current_user ? 'text-primary-900' : 'text-gray-900'
+            {/* History Tab */}
+            {activeTab === 'history' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Histórico de Pontos</h3>
+                {pointHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {pointHistory.map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-2 h-2 rounded-full ${
+                            entry.points > 0 ? 'bg-green-500' : 'bg-red-500'
+                          }`}></div>
+                          <div>
+                            <p className="font-medium text-gray-900">{entry.description}</p>
+                            <p className="text-sm text-gray-500">{formatDate(entry.created_at)}</p>
+                          </div>
+                        </div>
+                        <div className={`font-semibold ${
+                          entry.points > 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {entry.name}
-                          {entry.is_current_user && (
-                            <span className="ml-2 bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full">
-                              Você
-                            </span>
-                          )}
-                        </h3>
-                        {entry.level && (
-                          <p className="text-sm text-gray-600">Nível {entry.level}</p>
-                        )}
+                          {entry.points > 0 ? '+' : ''}{entry.points}
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-bold ${
-                        entry.is_current_user ? 'text-primary-900' : 'text-gray-900'
-                      }`}>
-                        {entry.points.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">pontos</div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'history' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Histórico de Pontos</h2>
-
-            <div className="card">
-              <div className="space-y-4">
-                {pointHistory.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-2 rounded-lg ${
-                        entry.points_change > 0
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-red-100 text-red-600'
-                      }`}>
-                        {entry.reason === 'CHECKIN' && <Zap className="h-5 w-5" />}
-                        {entry.reason === 'ACHIEVEMENT' && <Trophy className="h-5 w-5" />}
-                        {entry.reason === 'STREAK' && <Calendar className="h-5 w-5" />}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{entry.description}</h4>
-                        <p className="text-sm text-gray-600">
-                          {formatDate(entry.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className={`text-lg font-bold ${
-                      entry.points_change > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {entry.points_change > 0 ? '+' : ''}{entry.points_change}
-                    </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhuma atividade registrada ainda</p>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
