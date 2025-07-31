@@ -1,74 +1,107 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Clock, Calendar, Edit3, Award, Activity } from 'lucide-react';
-
-interface CheckInHistory {
-  id: string;
-  gymName: string;
-  date: string;
-  duration: string;
-  status: 'completed' | 'active';
-}
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Phone, MapPin, Clock, Calendar, Edit3, Award, Activity, TrendingUp, Target, Star } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useApp } from '../contexts/AppContext';
+import { BarChart, PieChart, LineChart } from '../components/Charts';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const UserProfile: React.FC = () => {
+  const { user, updateUser } = useAuth();
+  const { userStats, checkinHistory, isLoadingStats, refreshStats, refreshCheckins } = useApp();
   const [isEditing, setIsEditing] = useState(false);
-  const [userInfo, setUserInfo] = useState({
-    name: 'João Silva',
-    email: 'joao.silva@email.com',
-    phone: '(11) 99999-9999',
-    memberSince: '2024-01-15',
-    totalCheckIns: 47,
-    favoriteGym: 'Smart Fit Centro'
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || ''
   });
+  const [error, setError] = useState('');
 
-  const checkInHistory: CheckInHistory[] = [
-    {
-      id: '1',
-      gymName: 'Smart Fit Centro',
-      date: '2024-07-31',
-      duration: '1h 30min',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      gymName: 'Academia Forma',
-      date: '2024-07-29',
-      duration: '2h 15min',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      gymName: 'Bio Ritmo',
-      date: '2024-07-27',
-      duration: '1h 45min',
-      status: 'completed'
-    },
-    {
-      id: '4',
-      gymName: 'Smart Fit Centro',
-      date: '2024-07-25',
-      duration: '1h 20min',
-      status: 'completed'
+  useEffect(() => {
+    refreshStats();
+    refreshCheckins();
+  }, [refreshStats, refreshCheckins]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      });
     }
-  ];
+  }, [user]);
 
-  const stats = [
-    { icon: <Activity />, label: 'Total Check-ins', value: userInfo.totalCheckIns },
-    { icon: <Clock />, label: 'Horas Treinadas', value: '52h' },
-    { icon: <Award />, label: 'Academias Visitadas', value: '8' },
-    { icon: <Calendar />, label: 'Membro desde', value: new Date(userInfo.memberSince).toLocaleDateString('pt-BR') }
-  ];
-
-  const handleSave = () => {
-    setIsEditing(false);
-    // TODO: Implement save functionality
+  const handleSave = async () => {
+    setError('');
+    try {
+      await updateUser(formData);
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setUserInfo(prev => ({
+    setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
+  // Process check-in data for charts
+  const processCheckInData = () => {
+    if (!checkinHistory.length) return null;
+
+    // Weekly activity (last 7 days)
+    const weeklyData = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+      const dayCount = checkinHistory.filter(checkin => {
+        const checkinDate = new Date(checkin.checkin_time);
+        return checkinDate.toDateString() === date.toDateString();
+      }).length;
+
+      return { x: dayName, y: dayCount };
+    });
+
+    // Gym frequency
+    const gymFrequency: { [key: string]: number } = {};
+    checkinHistory.forEach(checkin => {
+      const gymName = checkin.gym_name || 'Academia';
+      gymFrequency[gymName] = (gymFrequency[gymName] || 0) + 1;
+    });
+
+    const gymData = Object.entries(gymFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ label: name, value: count }));
+
+    // Time distribution
+    const timeDistribution = { morning: 0, afternoon: 0, evening: 0, night: 0 };
+    checkinHistory.forEach(checkin => {
+      const hour = new Date(checkin.checkin_time).getHours();
+      if (hour >= 6 && hour < 12) timeDistribution.morning++;
+      else if (hour >= 12 && hour < 18) timeDistribution.afternoon++;
+      else if (hour >= 18 && hour < 22) timeDistribution.evening++;
+      else timeDistribution.night++;
+    });
+
+    const timeData = [
+      { label: 'Manhã', value: timeDistribution.morning },
+      { label: 'Tarde', value: timeDistribution.afternoon },
+      { label: 'Noite', value: timeDistribution.evening },
+      { label: 'Madrugada', value: timeDistribution.night }
+    ];
+
+    return { weeklyData, gymData, timeData };
+  };
+
+  const chartData = processCheckInData();
+
+  if (isLoadingStats && !userStats) {
+    return <LoadingSpinner message="Carregando perfil..." />;
+  }
 
   return (
     <div className="min-h-screen-safe bg-gray-50">
