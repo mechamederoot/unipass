@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Zap, Target, Users, Calendar, Award, TrendingUp, Medal, Crown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { apiService } from '../services/api';
 
 interface UserPoints {
   total_points: number;
