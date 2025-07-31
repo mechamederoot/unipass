@@ -118,29 +118,30 @@ const CheckInPage: React.FC = () => {
     setError('');
     setShowQRScanner(false);
     HapticFeedback.scanSuccess();
+    setIsLoading(true);
 
     try {
-      const qrInfo = qrCodeService.parseQRCode(qrData);
+      // Validar QR code com localização completa
+      const validationResult = await qrCodeService.validateQRCode(qrData);
 
-      if (!qrInfo) {
-        setError('QR Code inválido. Certifique-se de escanear um QR code do Unipass.');
+      if (!validationResult.isValid) {
+        setError(validationResult.errorMessage || 'QR code inválido');
         HapticFeedback.error();
         return;
       }
 
-      // Validate location if available
-      if (userLocation) {
-        const gym = gyms.find(g => g.id === qrInfo.gymId);
-        if (gym) {
-          // Note: In a real implementation, gym coordinates would come from the API
-          // For now, we'll skip location validation or use mock coordinates
-          console.log('QR code validated for gym:', qrInfo.gymName);
-        }
-      }
+      // QR code válido - prosseguir com check-in
+      console.log(`QR code válido para ${validationResult.gymName} (distância: ${validationResult.distance?.toFixed(0)}m)`);
 
       // Perform check-in
-      await createCheckin(qrInfo.gymId);
+      await createCheckin(validationResult.gymId!);
       HapticFeedback.checkinSuccess();
+
+      // Mostrar feedback de sucesso com distância
+      if (validationResult.distance !== undefined) {
+        const successMessage = `Check-in realizado! Você está a ${validationResult.distance.toFixed(0)}m da academia.`;
+        console.log(successMessage);
+      }
     } catch (err: any) {
       setError(err.message || 'Erro ao processar QR Code');
       HapticFeedback.error();
