@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from database.connection import init_db
-from routes import auth, users, gyms, checkins
+from routes import auth, users, gyms, checkins, admin, gamification, gym_admin, subscriptions
 from utils.config import settings
 
 
