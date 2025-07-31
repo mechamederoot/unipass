@@ -1,139 +1,258 @@
-export interface QRCodeData {
+import { locationService } from './location';
+
+interface QRCodeData {
+  type: 'gym_checkin';
   gymId: number;
   gymName: string;
-  timestamp: number;
-  checksum: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  validUntil: string;
+  signature: string;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  errorMessage?: string;
+  gymId?: number;
+  gymName?: string;
+  distance?: number;
 }
 
 class QRCodeService {
+  private readonly MAX_DISTANCE_METERS = 100; // Distância máxima permitida em metros
+  private readonly QR_CODE_VALIDITY_HOURS = 24; // QR codes válidos por 24 horas
+
   /**
-   * Parse QR code data from scanned string
+   * Valida um QR code e verifica a localização do usuário
    */
-  parseQRCode(qrString: string): QRCodeData | null {
+  async validateQRCode(qrData: string): Promise<ValidationResult> {
     try {
-      // Expected format: "unipass://checkin?gym=1&name=Smart%20Fit&timestamp=1234567890&checksum=abcd1234"
-      const url = new URL(qrString);
-      
-      if (url.protocol !== 'unipass:' || url.pathname !== '//checkin') {
-        throw new Error('Invalid QR code format');
+      // Parse do QR code
+      const qrCodeData = this.parseQRCode(qrData);
+      if (!qrCodeData) {
+        return { isValid: false, errorMessage: 'QR code inválido ou formato não reconhecido' };
       }
 
-      const params = url.searchParams;
-      const gymId = parseInt(params.get('gym') || '0');
-      const gymName = decodeURIComponent(params.get('name') || '');
-      const timestamp = parseInt(params.get('timestamp') || '0');
-      const checksum = params.get('checksum') || '';
-
-      if (!gymId || !gymName || !timestamp || !checksum) {
-        throw new Error('Missing required parameters');
+      // Validar expiração
+      const expiredResult = this.validateExpiration(qrCodeData);
+      if (!expiredResult.isValid) {
+        return expiredResult;
       }
 
-      // Validate timestamp (QR code should be recent - within 24 hours)
-      const now = Date.now();
-      const ageInHours = (now - timestamp) / (1000 * 60 * 60);
-      
-      if (ageInHours > 24) {
-        throw new Error('QR code expired');
+      // Validar localização
+      const locationResult = await this.validateLocation(qrCodeData);
+      if (!locationResult.isValid) {
+        return locationResult;
       }
 
-      // Validate checksum (simple validation for demo)
-      const expectedChecksum = this.generateChecksum(gymId, gymName, timestamp);
-      if (checksum !== expectedChecksum) {
-        throw new Error('Invalid QR code');
+      // Validar assinatura (simulação - seria implementação real em produção)
+      const signatureResult = this.validateSignature(qrCodeData);
+      if (!signatureResult.isValid) {
+        return signatureResult;
       }
 
       return {
-        gymId,
-        gymName,
-        timestamp,
-        checksum
+        isValid: true,
+        gymId: qrCodeData.gymId,
+        gymName: qrCodeData.gymName,
+        distance: locationResult.distance
       };
+
     } catch (error) {
-      console.error('Error parsing QR code:', error);
-      return null;
+      console.error('Erro ao validar QR code:', error);
+      return { isValid: false, errorMessage: 'Erro interno ao validar QR code' };
     }
   }
 
   /**
-   * Generate QR code URL for a gym
+   * Parse do QR code para extrair dados estruturados
    */
-  generateQRCodeURL(gymId: number, gymName: string): string {
-    const timestamp = Date.now();
-    const checksum = this.generateChecksum(gymId, gymName, timestamp);
-    
-    const params = new URLSearchParams({
-      gym: gymId.toString(),
-      name: gymName,
-      timestamp: timestamp.toString(),
-      checksum: checksum
-    });
+  private parseQRCode(qrData: string): QRCodeData | null {
+    try {
+      // Primeiro tenta parser como JSON
+      const parsed = JSON.parse(qrData);
+      
+      // Valida estrutura básica
+      if (parsed.type !== 'gym_checkin' || !parsed.gymId || !parsed.coordinates) {
+        return null;
+      }
 
-    return `unipass://checkin?${params.toString()}`;
-  }
-
-  /**
-   * Generate a simple checksum for QR code validation
-   */
-  private generateChecksum(gymId: number, gymName: string, timestamp: number): string {
-    const data = `${gymId}-${gymName}-${timestamp}`;
-    let hash = 0;
-    
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      return parsed as QRCodeData;
+    } catch (error) {
+      // Se não for JSON, tenta parser formatos alternativos
+      return this.parseAlternativeFormats(qrData);
     }
-    
-    return Math.abs(hash).toString(16).substring(0, 8);
   }
 
   /**
-   * Validate if user is in the correct location for check-in
+   * Parse de formatos alternativos de QR code
    */
-  validateLocation(
-    userLat: number, 
-    userLon: number, 
-    gymLat: number, 
-    gymLon: number
-  ): boolean {
-    const distance = this.calculateDistance(userLat, userLon, gymLat, gymLon);
-    const maxDistance = 0.1; // 100 meters
-    
-    return distance <= maxDistance;
+  private parseAlternativeFormats(qrData: string): QRCodeData | null {
+    // Formato URL: unipass://checkin/gymId/lat/lng/signature
+    const urlMatch = qrData.match(/unipass:\/\/checkin\/(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)\/(.+)/);
+    if (urlMatch) {
+      const [, gymId, lat, lng, signature] = urlMatch;
+      return {
+        type: 'gym_checkin',
+        gymId: parseInt(gymId),
+        gymName: `Academia ${gymId}`, // Em produção, buscar nome real
+        coordinates: {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng)
+        },
+        validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        signature
+      };
+    }
+
+    // Formato simples: GYM_ID:LAT:LNG:TIMESTAMP
+    const simpleMatch = qrData.match(/^(\d+):(-?\d+\.?\d*):(-?\d+\.?\d*):(\d+)$/);
+    if (simpleMatch) {
+      const [, gymId, lat, lng, timestamp] = simpleMatch;
+      return {
+        type: 'gym_checkin',
+        gymId: parseInt(gymId),
+        gymName: `Academia ${gymId}`,
+        coordinates: {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng)
+        },
+        validUntil: new Date(parseInt(timestamp)).toISOString(),
+        signature: 'legacy'
+      };
+    }
+
+    return null;
   }
 
   /**
-   * Calculate distance between two points in kilometers
+   * Valida se o QR code não expirou
    */
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth's radius in kilometers
-    
-    const lat1Rad = this.toRadians(lat1);
-    const lat2Rad = this.toRadians(lat2);
-    const deltaLat = this.toRadians(lat2 - lat1);
-    const deltaLon = this.toRadians(lon2 - lon1);
+  private validateExpiration(qrCodeData: QRCodeData): ValidationResult {
+    const now = new Date();
+    const validUntil = new Date(qrCodeData.validUntil);
 
-    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-              Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-              Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
-    
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
-    return R * c;
-  }
+    if (now > validUntil) {
+      return { 
+        isValid: false, 
+        errorMessage: 'QR code expirado. Solicite um novo QR code na academia.' 
+      };
+    }
 
-  private toRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
+    return { isValid: true };
   }
 
   /**
-   * Generate sample QR codes for testing
+   * Valida a localização do usuário em relação à academia
    */
-  generateSampleQRCodes(): { [key: string]: string } {
+  private async validateLocation(qrCodeData: QRCodeData): Promise<ValidationResult & { distance?: number }> {
+    try {
+      // Obter localização atual do usuário
+      const userLocation = await locationService.getCurrentPosition();
+      
+      if (!userLocation) {
+        return { 
+          isValid: false, 
+          errorMessage: 'Não foi possível obter sua localização. Ative o GPS e tente novamente.' 
+        };
+      }
+
+      // Calcular distância
+      const distance = locationService.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        qrCodeData.coordinates.latitude,
+        qrCodeData.coordinates.longitude
+      );
+
+      // Verificar se está dentro do raio permitido
+      if (distance > this.MAX_DISTANCE_METERS) {
+        return {
+          isValid: false,
+          errorMessage: `Você precisa estar próximo à academia para fazer check-in. Distância atual: ${Math.round(distance)}m (máximo: ${this.MAX_DISTANCE_METERS}m)`,
+          distance
+        };
+      }
+
+      return { isValid: true, distance };
+
+    } catch (error) {
+      console.error('Erro ao validar localização:', error);
+      return { 
+        isValid: false, 
+        errorMessage: 'Erro ao verificar localização. Verifique suas permissões de GPS.' 
+      };
+    }
+  }
+
+  /**
+   * Valida a assinatura do QR code (implementação simplificada)
+   */
+  private validateSignature(qrCodeData: QRCodeData): ValidationResult {
+    // Em produção, isso seria uma validação cryptográfica real
+    // Por ora, aceita qualquer assinatura não vazia
+    if (!qrCodeData.signature || qrCodeData.signature.length < 8) {
+      return { 
+        isValid: false, 
+        errorMessage: 'QR code com assinatura inválida. Use apenas QR codes oficiais.' 
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Gera um QR code para uma academia (para uso administrativo)
+   */
+  generateGymQRCode(gymId: number, gymName: string, latitude: number, longitude: number): string {
+    const qrCodeData: QRCodeData = {
+      type: 'gym_checkin',
+      gymId,
+      gymName,
+      coordinates: { latitude, longitude },
+      validUntil: new Date(Date.now() + this.QR_CODE_VALIDITY_HOURS * 60 * 60 * 1000).toISOString(),
+      signature: this.generateSignature(gymId, latitude, longitude)
+    };
+
+    return JSON.stringify(qrCodeData);
+  }
+
+  /**
+   * Gera uma assinatura simples (em produção seria HMAC ou similar)
+   */
+  private generateSignature(gymId: number, latitude: number, longitude: number): string {
+    const data = `${gymId}:${latitude}:${longitude}:${Date.now()}`;
+    return btoa(data).substring(0, 16);
+  }
+
+  /**
+   * Verifica se uma string parece ser um QR code válido
+   */
+  isValidQRCodeFormat(qrData: string): boolean {
+    if (!qrData || qrData.length < 10) return false;
+
+    // Verifica se é JSON válido
+    try {
+      const parsed = JSON.parse(qrData);
+      return parsed.type === 'gym_checkin';
+    } catch (error) {
+      // Verifica formatos alternativos
+      return /^(unipass:\/\/|[\d:.-]+)/.test(qrData);
+    }
+  }
+
+  /**
+   * Obtém informações básicas do QR code sem validação completa
+   */
+  getQRCodeInfo(qrData: string): { gymId?: number; gymName?: string } | null {
+    const parsed = this.parseQRCode(qrData);
+    if (!parsed) return null;
+
     return {
-      'Smart Fit Centro': this.generateQRCodeURL(1, 'Smart Fit Centro'),
-      'Academia Forma': this.generateQRCodeURL(2, 'Academia Forma'),
-      'Bio Ritmo': this.generateQRCodeURL(3, 'Bio Ritmo'),
+      gymId: parsed.gymId,
+      gymName: parsed.gymName
     };
   }
 }
