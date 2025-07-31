@@ -49,7 +49,7 @@ def create_admin_user():
             phone="(11) 99999-9999",
             password_hash=get_password_hash("admin123"),
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.add(admin_user)
@@ -80,7 +80,7 @@ def create_admin_user():
             phone="(11) 88888-8888",
             password_hash=get_password_hash("dev123"),
             is_active=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.add(dev_user)
