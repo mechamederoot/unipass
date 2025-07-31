@@ -116,7 +116,7 @@ class PWAService {
    */
   private showUpdateAvailable() {
     // You could integrate this with your notification system
-    if (confirm('Nova versão disponível! Deseja atualizar?')) {
+    if (window.confirm('Nova versão disponível! Deseja atualizar?')) {
       window.location.reload();
     }
   }
