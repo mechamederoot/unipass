@@ -36,6 +36,10 @@ interface CheckIn {
   duration_minutes?: number;
   gym_name?: string;
   gym_address?: string;
+  gym?: {
+    name: string;
+    address: string;
+  };
 }
 
 interface UserStats {
