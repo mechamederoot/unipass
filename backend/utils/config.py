@@ -54,14 +54,16 @@ class Settings(BaseSettings):
     # Cache
     CACHE_TTL_SECONDS: int = 300  # 5 minutes
     
-    @validator('SECRET_KEY', pre=True)
+    @field_validator('SECRET_KEY', mode='before')
+    @classmethod
     def generate_secret_key(cls, v):
         if v is None:
             # Generate a secure random secret key
             return secrets.token_urlsafe(32)
         return v
-    
-    @validator('CORS_ORIGINS', pre=True)
+
+    @field_validator('CORS_ORIGINS', mode='before')
+    @classmethod
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             return [i.strip() for i in v.split(",")]
