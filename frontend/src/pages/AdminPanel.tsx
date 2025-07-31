@@ -44,7 +44,7 @@ interface GymAdmin {
 }
 
 const AdminPanel: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'gyms' | 'analytics' | 'settings'>('dashboard');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
