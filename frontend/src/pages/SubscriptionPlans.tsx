@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, Star, Zap, Shield, Crown, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { apiService } from '../services/api';
 
 interface Plan {
   id: number;
@@ -77,7 +78,7 @@ const SubscriptionPlans: React.FC = () => {
           "8 check-ins por mês",
           "Acesso a 50+ academias",
           "App mobile",
-          "Suporte básico"
+          "Suporte b��sico"
         ],
         savings_yearly: 59.80
       },
