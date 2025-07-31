@@ -8,6 +8,7 @@ import LocationPermission from '../components/LocationPermission';
 import QRScanner from '../components/QRScanner';
 import FavoriteButton from '../components/FavoriteButton';
 import RatingStars from '../components/RatingStars';
+import HapticFeedback from '../utils/haptic';
 
 interface Gym {
   id: number;
@@ -83,10 +84,14 @@ const CheckInPage: React.FC = () => {
 
   const handleCheckIn = async (gym: Gym) => {
     setError('');
+    HapticFeedback.medium();
+
     try {
       await createCheckin(gym.id);
+      HapticFeedback.checkinSuccess();
     } catch (err: any) {
       setError(err.message);
+      HapticFeedback.error();
     }
   };
 
@@ -94,10 +99,14 @@ const CheckInPage: React.FC = () => {
     if (!activeCheckin) return;
 
     setError('');
+    HapticFeedback.medium();
+
     try {
       await checkout(activeCheckin.id);
+      HapticFeedback.success();
     } catch (err: any) {
       setError(err.message);
+      HapticFeedback.error();
     }
   };
 
@@ -108,12 +117,14 @@ const CheckInPage: React.FC = () => {
   const handleQRScan = async (qrData: string) => {
     setError('');
     setShowQRScanner(false);
+    HapticFeedback.scanSuccess();
 
     try {
       const qrInfo = qrCodeService.parseQRCode(qrData);
 
       if (!qrInfo) {
         setError('QR Code inválido. Certifique-se de escanear um QR code do Unipass.');
+        HapticFeedback.error();
         return;
       }
 
@@ -129,8 +140,10 @@ const CheckInPage: React.FC = () => {
 
       // Perform check-in
       await createCheckin(qrInfo.gymId);
+      HapticFeedback.checkinSuccess();
     } catch (err: any) {
       setError(err.message || 'Erro ao processar QR Code');
+      HapticFeedback.error();
     }
   };
 
