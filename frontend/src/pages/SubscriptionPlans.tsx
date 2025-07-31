@@ -93,7 +93,7 @@ const SubscriptionPlans: React.FC = () => {
           price_monthly: 79.90,
           price_yearly: 799.00,
           features: ['Check-ins ilimitados', 'Todos os recursos premium', 'Suporte 24/7', 'Acesso antecipado a novidades'],
-          max_checkins_per_month: null,
+          max_checkins_per_month: undefined,
           is_active: true
         }
       ]);
