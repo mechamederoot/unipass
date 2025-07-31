@@ -38,6 +38,7 @@ const CheckInPage: React.FC = () => {
 
   const [checkInMethod, setCheckInMethod] = useState<'qr' | 'search'>('search');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Gym[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
