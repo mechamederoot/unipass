@@ -111,7 +111,6 @@ def create_admin_user():
 
 def create_sample_gyms():
     """Cria academias de exemplo para testes"""
-    from models.gym import Gym
     
     db: Session = SessionLocal()
     
