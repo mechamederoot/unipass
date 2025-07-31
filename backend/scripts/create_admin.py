@@ -88,11 +88,11 @@ def create_admin_user():
         db.refresh(dev_user)
         
         # Criar role de admin para o dev
-        dev_role = UserRole(
+        dev_role = AdminUser(
             user_id=dev_user.id,
-            role="admin",
-            permissions=["user_management", "gym_management", "reports"],
-            created_at=datetime.utcnow()
+            role=UserRole.GYM_ADMIN,
+            permissions='["user_management", "gym_management", "reports"]',
+            is_active=True
         )
         
         db.add(dev_role)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     create_admin_user()
     print("\n" + "=" * 50)
     create_sample_gyms()
-    print("\n��� Inicialização concluída!")
+    print("\n🎉 Inicialização concluída!")
     print("\n📋 Credenciais de acesso:")
     print("👤 Admin: admin@unipass.com / admin123")
     print("👤 Dev: dev@unipass.com / dev123")
