@@ -76,7 +76,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose, isOpen }) => {
   const initQRScanner = async () => {
     try {
       // Dynamically import QrScanner to avoid SSR issues
-      const QrScanner = (await import('qr-scanner')).default;
+      const QrScanner = (await import('qr-scanner' as any)).default;
       
       if (videoRef.current) {
         scannerRef.current = new QrScanner(
