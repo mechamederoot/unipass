@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     password: string;
   }) => {
     try {
-      const response = await apiService.register(userData);
+      await apiService.register(userData);
       
       // Auto-login after registration
       await login(userData.email, userData.password);
