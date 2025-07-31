@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import Logo from '../components/Logo';
 
 const RegisterPage: React.FC = () => {
@@ -14,23 +15,46 @@ const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { register, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError('');
+
     if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem');
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
     setIsLoading(true);
-    
-    // TODO: Implement actual registration logic
-    setTimeout(() => {
+
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password
+      });
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-      navigate('/login');
-    }, 1000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +82,12 @@ const RegisterPage: React.FC = () => {
 
         {/* Registration Form */}
         <div className="card">
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Field */}
             <div>
