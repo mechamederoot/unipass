@@ -29,15 +29,8 @@ import models.audit
 def create_admin_user():
     """Cria um usuário administrador padrão"""
     
-    # Criar todas as tabelas
-    models.user.Base.metadata.create_all(bind=engine)
-    models.admin.Base.metadata.create_all(bind=engine)
-    models.gym.Base.metadata.create_all(bind=engine)
-    models.checkin.Base.metadata.create_all(bind=engine)
-    models.subscription.Base.metadata.create_all(bind=engine)
-    models.gamification.Base.metadata.create_all(bind=engine)
-    models.features.Base.metadata.create_all(bind=engine)
-    models.audit.Base.metadata.create_all(bind=engine)
+    # Criar todas as tabelas (uma vez é suficiente pois todos os modelos usam o mesmo Base)
+    Base.metadata.create_all(bind=engine)
     
     db: Session = SessionLocal()
     
