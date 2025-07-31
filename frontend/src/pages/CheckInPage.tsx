@@ -100,12 +100,15 @@ const CheckInPage: React.FC = () => {
     setShowLocationPrompt(false);
   };
 
-  const filteredGyms = nearbyGyms.filter(gym =>
-    gym.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    gym.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const displayGyms = searchQuery ? searchResults : gyms;
 
-  if (isCheckedIn && checkedInGym) {
+  // Format distance for display
+  const formatDistance = (distance?: number) => {
+    if (!distance) return null;
+    return distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`;
+  };
+
+  if (activeCheckin) {
     return (
       <div className="min-h-screen-safe bg-gradient-to-br from-green-50 to-primary-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
@@ -117,32 +120,68 @@ const CheckInPage: React.FC = () => {
               Check-in Realizado!
             </h2>
             <p className="text-gray-600 mb-6">
-              Você está agora na
+              Olá {user?.name}, você está treinando na
             </p>
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h3 className="font-semibold text-gray-900 mb-2">
-                {checkedInGym.name}
+                {activeCheckin.gym?.name || 'Academia'}
               </h3>
               <p className="text-gray-600 text-sm mb-2">
-                {checkedInGym.address}
+                {activeCheckin.gym?.address}
               </p>
               <div className="flex items-center justify-center text-green-600 text-sm">
                 <Clock size={16} className="mr-1" />
-                <span>Check-in às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Check-in às {new Date(activeCheckin.checkin_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                <span className="text-red-700 text-sm">{error}</span>
+              </div>
+            )}
             <p className="text-gray-600 mb-6">
               Aproveite seu treino! Lembre-se de fazer o check-out ao sair.
             </p>
             <button
               onClick={handleCheckOut}
+              disabled={isLoadingCheckin}
               className="btn-secondary w-full mb-4"
             >
-              Fazer Check-out
+              {isLoadingCheckin ? (
+                <div className="flex items-center justify-center">
+                  <Loader className="animate-spin h-5 w-5 mr-2" />
+                  Fazendo check-out...
+                </div>
+              ) : (
+                'Fazer Check-out'
+              )}
             </button>
             <p className="text-xs text-gray-500">
               O check-out será automático após 4 horas
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show location prompt if needed
+  if (showLocationPrompt) {
+    return (
+      <div className="min-h-screen-safe bg-gray-50">
+        <div className="max-w-md mx-auto px-4 py-8">
+          <LocationPermission
+            onLocationGranted={handleLocationGranted}
+            onLocationDenied={() => setShowLocationPrompt(false)}
+          />
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowLocationPrompt(false)}
+              className="text-gray-600 hover:text-gray-800 text-sm"
+            >
+              Pular por agora
+            </button>
           </div>
         </div>
       </div>
@@ -160,6 +199,13 @@ const CheckInPage: React.FC = () => {
             Escolha como fazer seu check-in
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center max-w-md mx-auto">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <span className="text-red-700 text-sm">{error}</span>
+          </div>
+        )}
 
         {/* Method Selection */}
         <div className="flex bg-white rounded-lg p-1 mb-8 max-w-md mx-auto">
@@ -214,61 +260,130 @@ const CheckInPage: React.FC = () => {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
                   className="input-field pl-10"
                   placeholder="Buscar academia..."
                 />
+                {isSearching && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <Loader className="h-5 w-5 text-gray-400 animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Nearby Gyms */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center">
-                Academias Próximas
+                {searchQuery ? 'Resultados da Busca' : 'Academias Próximas'}
               </h2>
-              <div className="grid gap-4 max-w-2xl mx-auto">
-                {filteredGyms.map((gym) => (
-                  <div key={gym.id} className="card hover:shadow-lg transition-shadow duration-300">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-2">
-                          {gym.name}
-                        </h3>
-                        <div className="flex items-center text-gray-600 text-sm mb-2">
-                          <MapPin size={16} className="mr-1" />
-                          <span>{gym.address}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{gym.distance}</span>
-                          <div className="flex items-center">
-                            <Clock size={16} className="mr-1 text-gray-400" />
-                            <span className="text-gray-500">{gym.openHours}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-4 flex flex-col items-end">
-                        <div className={`text-xs px-2 py-1 rounded-full mb-3 ${
-                          gym.isOpen 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {gym.isOpen ? 'Aberta' : 'Fechada'}
-                        </div>
-                        <button
-                          onClick={() => handleCheckIn(gym)}
-                          disabled={!gym.isOpen}
-                          className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                            gym.isOpen
-                              ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          }`}
-                        >
-                          {gym.isOpen ? 'Check-in' : 'Fechada'}
-                        </button>
-                      </div>
+
+              {!userLocation && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 max-w-2xl mx-auto">
+                  <div className="flex items-center">
+                    <MapPin className="h-5 w-5 text-yellow-600 mr-2" />
+                    <div>
+                      <p className="text-sm text-yellow-800">
+                        Ative a localização para ver academias ordenadas por proximidade
+                      </p>
+                      <button
+                        onClick={() => setShowLocationPrompt(true)}
+                        className="text-yellow-700 underline text-sm mt-1"
+                      >
+                        Ativar localização
+                      </button>
                     </div>
                   </div>
-                ))}
+                </div>
+              )}
+
+              <div className="grid gap-4 max-w-2xl mx-auto">
+                {displayGyms.length === 0 ? (
+                  <div className="card text-center py-8">
+                    <p className="text-gray-500">
+                      {searchQuery ? 'Nenhuma academia encontrada para sua busca' : 'Nenhuma academia disponível'}
+                    </p>
+                  </div>
+                ) : (
+                  displayGyms.map((gym) => (
+                    <div key={gym.id} className="card hover:shadow-lg transition-shadow duration-300">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {gym.name}
+                            </h3>
+                            <div className="flex items-center">
+                              <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
+                              <span className="text-sm text-gray-600">{gym.rating}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center text-gray-600 text-sm mb-2">
+                            <MapPin size={16} className="mr-1" />
+                            <span>{gym.address}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm mb-3">
+                            {formatDistance(gym.distance) && (
+                              <span className="text-gray-500">{formatDistance(gym.distance)}</span>
+                            )}
+                            <div className="flex items-center">
+                              <Users size={16} className="mr-1 text-gray-400" />
+                              <span className="text-gray-500">
+                                {gym.current_occupancy}/{gym.max_capacity} ({Math.round(gym.occupancy_percentage)}%)
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Occupancy bar */}
+                          <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                gym.occupancy_percentage > 80 ? 'bg-red-500' :
+                                gym.occupancy_percentage > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min(gym.occupancy_percentage, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="ml-4 flex flex-col items-end">
+                          <div className={`text-xs px-2 py-1 rounded-full mb-3 ${
+                            gym.is_open_now
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {gym.is_open_now ? 'Aberta' : 'Fechada'}
+                          </div>
+
+                          <button
+                            onClick={() => handleCheckIn(gym)}
+                            disabled={!gym.is_open_now || isLoadingCheckin || gym.current_occupancy >= gym.max_capacity}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 min-w-[100px] ${
+                              gym.is_open_now && gym.current_occupancy < gym.max_capacity && !isLoadingCheckin
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                          >
+                            {isLoadingCheckin ? (
+                              <Loader className="animate-spin h-4 w-4 mx-auto" />
+                            ) : !gym.is_open_now ? (
+                              'Fechada'
+                            ) : gym.current_occupancy >= gym.max_capacity ? (
+                              'Lotada'
+                            ) : (
+                              'Check-in'
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
