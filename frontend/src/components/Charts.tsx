@@ -271,4 +271,4 @@ export const LineChart: React.FC<LineChartProps> = ({
   );
 };
 
-export default { BarChart, PieChart, LineChart };
+export { BarChart, PieChart, LineChart };
