@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Building2, CreditCard, TrendingUp, AlertTriangle, 
   Search, Filter, Plus, Settings, Eye, Ban, CheckCircle,
-  Calendar, DollarSign, Activity, UserX, Building
+  DollarSign, Activity
 } from 'lucide-react';
-import { BarChart, LineChart } from '../components/Charts';
+import { BarChart } from '../components/Charts';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface AdminStats {
