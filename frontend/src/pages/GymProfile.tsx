@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapPin, Clock, Phone, Star, Users, Wifi, Car, Shower, Coffee, CheckCircle } from 'lucide-react';
+import { MapPin, Clock, Phone, Star, Users, Wifi, Car, Shower, Coffee, CheckCircle, MessageSquare } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
+import FavoriteButton from '../components/FavoriteButton';
+import RatingStars from '../components/RatingStars';
+import ReviewModal from '../components/ReviewModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface GymData {
   id: string;
@@ -23,31 +29,34 @@ interface GymData {
 
 const GymProfile: React.FC = () => {
   const { id } = useParams();
-  const [showAllImages, setShowAllImages] = useState(false);
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { getGymDetails, activeCheckin, createCheckin, isLoadingCheckin } = useApp();
 
-  // Mock data - In a real app, this would come from an API
-  const gymData: GymData = {
-    id: id || '1',
-    name: 'Smart Fit Centro',
-    address: 'Rua das Flores, 123 - Centro, São Paulo - SP',
-    phone: '(11) 3333-4444',
-    rating: 4.5,
-    totalReviews: 234,
-    openHours: {
-      weekdays: '6h às 22h',
-      weekends: '8h às 18h'
-    },
-    amenities: ['Wifi Grátis', 'Estacionamento', 'Chuveiros', 'Café'],
-    description: 'Academia completa com equipamentos modernos e ambiente climatizado. Oferecemos aulas funcionais, musculação completa e acompanhamento nutricional.',
-    images: [
-      'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800',
-      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
-      'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800'
-    ],
-    isOpen: true,
-    currentOccupancy: 45,
-    maxCapacity: 80
+  const [gymData, setGymData] = useState<GymDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAllImages, setShowAllImages] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (id) {
+      loadGymData();
+    }
+  }, [id]);
+
+  const loadGymData = async () => {
+    if (!id) return;
+
+    setIsLoading(true);
+    try {
+      const data = await getGymDetails(parseInt(id));
+      setGymData(data);
+    } catch (err: any) {
+      setError('Erro ao carregar dados da academia');
+      console.error('Error loading gym data:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const amenityIcons: Record<string, React.ReactNode> = {
@@ -57,13 +66,55 @@ const GymProfile: React.FC = () => {
     'Café': <Coffee size={20} />
   };
 
-  const occupancyPercentage = (gymData.currentOccupancy / gymData.maxCapacity) * 100;
-  const occupancyColor = occupancyPercentage > 80 ? 'bg-red-500' : occupancyPercentage > 60 ? 'bg-yellow-500' : 'bg-green-500';
+  const handleCheckIn = async () => {
+    if (!gymData || !isAuthenticated) return;
 
-  const handleCheckIn = () => {
-    setIsCheckedIn(true);
-    // TODO: Implement actual check-in logic
+    setError('');
+    try {
+      await createCheckin(gymData.id);
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
+
+  const handleReviewSubmit = async (review: { rating: number; comment: string }) => {
+    setShowReviewModal(false);
+    // TODO: Implement review submission to backend
+    console.log('Review submitted:', review);
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner message="Carregando academia..." />;
+  }
+
+  if (error && !gymData) {
+    return (
+      <div className="min-h-screen-safe bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={loadGymData}
+            className="btn-primary"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gymData) {
+    return (
+      <div className="min-h-screen-safe bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Academia não encontrada</p>
+        </div>
+      </div>
+    );
+  }
+
+  const occupancyPercentage = (gymData.current_occupancy / gymData.max_capacity) * 100;
+  const occupancyColor = occupancyPercentage > 80 ? 'bg-red-500' : occupancyPercentage > 60 ? 'bg-yellow-500' : 'bg-green-500';
 
   return (
     <div className="min-h-screen-safe bg-gray-50">
@@ -92,21 +143,25 @@ const GymProfile: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {gymData.name}
-                </h1>
+                <div className="flex items-center justify-between mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    {gymData.name}
+                  </h1>
+                  <FavoriteButton gymId={gymData.id} size="lg" />
+                </div>
+
                 <div className="flex items-center space-x-4 text-gray-600 mb-3">
                   <div className="flex items-center">
-                    <Star className="h-5 w-5 text-yellow-500 fill-current mr-1" />
-                    <span className="font-medium">{gymData.rating}</span>
-                    <span className="text-sm">({gymData.totalReviews} avaliações)</span>
+                    <RatingStars rating={gymData.rating} showValue />
+                    <span className="text-sm ml-2">({gymData.total_reviews} avaliações)</span>
                   </div>
                   <div className={`px-2 py-1 rounded-full text-sm ${
-                    gymData.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    gymData.is_open_now ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>
-                    {gymData.isOpen ? 'Aberta agora' : 'Fechada'}
+                    {gymData.is_open_now ? 'Aberta agora' : 'Fechada'}
                   </div>
                 </div>
+
                 <div className="flex items-center text-gray-600 text-sm">
                   <MapPin size={16} className="mr-1" />
                   <span>{gymData.address}</span>
@@ -114,9 +169,16 @@ const GymProfile: React.FC = () => {
               </div>
             </div>
 
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center">
+                <span className="text-red-700 text-sm">{error}</span>
+              </div>
+            )}
+
             {/* Check-in Button */}
             <div className="mb-6">
-              {isCheckedIn ? (
+              {activeCheckin ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
                   <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
                   <div>
@@ -125,17 +187,42 @@ const GymProfile: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={handleCheckIn}
-                  disabled={!gymData.isOpen}
-                  className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors duration-200 ${
-                    gymData.isOpen
-                      ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {gymData.isOpen ? 'Fazer Check-in' : 'Academia Fechada'}
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={!gymData.is_open_now || isLoadingCheckin || gymData.current_occupancy >= gymData.max_capacity || !isAuthenticated}
+                    className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors duration-200 ${
+                      gymData.is_open_now && gymData.current_occupancy < gymData.max_capacity && isAuthenticated && !isLoadingCheckin
+                        ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {isLoadingCheckin ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Fazendo check-in...
+                      </div>
+                    ) : !isAuthenticated ? (
+                      'Faça login para check-in'
+                    ) : !gymData.is_open_now ? (
+                      'Academia Fechada'
+                    ) : gymData.current_occupancy >= gymData.max_capacity ? (
+                      'Academia Lotada'
+                    ) : (
+                      'Fazer Check-in'
+                    )}
+                  </button>
+
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="w-full py-3 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors duration-200 flex items-center justify-center"
+                    >
+                      <MessageSquare size={20} className="mr-2" />
+                      Avaliar Academia
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -152,14 +239,14 @@ const GymProfile: React.FC = () => {
                   <Clock className="h-5 w-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Seg-Sex:</p>
-                    <p className="font-medium">{gymData.openHours.weekdays}</p>
+                    <p className="font-medium">{gymData.open_hours_weekdays}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-gray-400 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Sáb-Dom:</p>
-                    <p className="font-medium">{gymData.openHours.weekends}</p>
+                    <p className="font-medium">{gymData.open_hours_weekends}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -180,7 +267,7 @@ const GymProfile: React.FC = () => {
                     <Users className="h-5 w-5 text-gray-400 mr-3" />
                     <span className="text-gray-700">Ocupação atual</span>
                   </div>
-                  <span className="font-semibold">{gymData.currentOccupancy}/{gymData.maxCapacity}</span>
+                  <span className="font-semibold">{gymData.current_occupancy}/{gymData.max_capacity}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
@@ -213,7 +300,7 @@ const GymProfile: React.FC = () => {
               Comodidades
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {gymData.amenities.map((amenity, index) => (
+              {gymData.amenities_list.map((amenity, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   <div className="text-primary-600">
                     {amenityIcons[amenity] || <CheckCircle size={20} />}
@@ -226,6 +313,14 @@ const GymProfile: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Review Modal */}
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          gymName={gymData.name}
+          onSubmit={handleReviewSubmit}
+        />
       </div>
     </div>
   );
