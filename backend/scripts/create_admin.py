@@ -10,11 +10,21 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy.orm import Session
-from database.connection import SessionLocal, engine
+from database.connection import SessionLocal, engine, Base
 from models.user import User
 from models.admin import UserRole
+from models.gym import Gym
 from utils.auth import get_password_hash
-import models
+
+# Import all models to ensure tables are created
+import models.user
+import models.admin
+import models.gym
+import models.checkin
+import models.subscription
+import models.gamification
+import models.features
+import models.audit
 
 def create_admin_user():
     """Cria um usuário administrador padrão"""
