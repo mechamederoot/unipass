@@ -10,24 +10,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ShareButton from '../components/ShareButton';
 import HapticFeedback from '../utils/haptic';
 
-interface GymData {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  rating: number;
-  totalReviews: number;
-  openHours: {
-    weekdays: string;
-    weekends: string;
-  };
-  amenities: string[];
-  description: string;
-  images: string[];
-  isOpen: boolean;
-  currentOccupancy: number;
-  maxCapacity: number;
-}
+
 
 const GymProfile: React.FC = () => {
   const { id } = useParams();
