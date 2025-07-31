@@ -150,7 +150,7 @@ class QRCodeService {
   private async validateLocation(qrCodeData: QRCodeData): Promise<ValidationResult & { distance?: number }> {
     try {
       // Obter localização atual do usuário
-      const userLocation = await locationService.getCurrentPosition();
+      const userLocation = await locationService.getCurrentLocation();
       
       if (!userLocation) {
         return { 
