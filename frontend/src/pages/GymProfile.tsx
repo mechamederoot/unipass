@@ -113,7 +113,7 @@ const GymProfile: React.FC = () => {
         <div className="relative">
           <div className="h-64 md:h-80 overflow-hidden">
             <img
-              src={gymData.images[0]}
+              src={gymData.images?.[0] || 'https://via.placeholder.com/800x600/e5e7eb/9ca3af?text=Academia'}
               alt={gymData.name}
               className="w-full h-full object-cover"
             />
