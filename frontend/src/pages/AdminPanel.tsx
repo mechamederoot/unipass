@@ -4,7 +4,7 @@ import {
   Search, Filter, Plus, Settings, Eye, Ban, CheckCircle,
   DollarSign, Activity
 } from 'lucide-react';
-import { BarChart } from '../components/Charts';
+
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface AdminStats {
