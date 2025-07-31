@@ -85,6 +85,17 @@ def create_admin():
             db.commit()
             db.refresh(dev_user)
             
+            # Criar role de admin para o dev
+            dev_role = AdminUser(
+                user_id=dev_user.id,
+                role=UserRole.GYM_ADMIN,
+                permissions='["user_management", "gym_management", "reports"]',
+                is_active=True
+            )
+
+            db.add(dev_role)
+            db.commit()
+
             print("✅ Desenvolvedor criado com sucesso!")
             print(f"📧 Email: dev@unipass.com")
             print(f"🔐 Senha: dev123")
