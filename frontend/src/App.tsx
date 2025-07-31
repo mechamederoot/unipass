@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import InstallPrompt from './components/InstallPrompt';
 import './index.css';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/gym/:id" element={<GymProfile />} />
               </Routes>
             </main>
+            <InstallPrompt />
           </div>
         </Router>
       </AppProvider>
