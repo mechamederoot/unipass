@@ -64,7 +64,7 @@ const GymProfile: React.FC = () => {
   const amenityIcons: Record<string, React.ReactNode> = {
     'Wifi Grátis': <Wifi size={20} />,
     'Estacionamento': <Car size={20} />,
-    'Chuveiros': <Shower size={20} />,
+    'Chuveiros': <Droplets size={20} />,
     'Café': <Coffee size={20} />
   };
 
