@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapPin, Clock, Phone, Star, Users, Wifi, Car, Droplets, Coffee, CheckCircle, MessageSquare } from 'lucide-react';
-import { useApp } from '../contexts/AppContext';
+import { useApp, GymDetails } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 import FavoriteButton from '../components/FavoriteButton';
 import RatingStars from '../components/RatingStars';
