@@ -55,7 +55,7 @@ const Gamification: React.FC = () => {
 
   useEffect(() => {
     loadGamificationData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadGamificationData = async () => {
     setIsLoading(true);
