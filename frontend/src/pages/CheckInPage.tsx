@@ -6,6 +6,8 @@ import { locationService } from '../services/location';
 import { qrCodeService } from '../services/qrcode';
 import LocationPermission from '../components/LocationPermission';
 import QRScanner from '../components/QRScanner';
+import FavoriteButton from '../components/FavoriteButton';
+import RatingStars from '../components/RatingStars';
 
 interface Gym {
   id: number;
@@ -375,9 +377,9 @@ const CheckInPage: React.FC = () => {
                             <h3 className="font-semibold text-gray-900">
                               {gym.name}
                             </h3>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
-                              <span className="text-sm text-gray-600">{gym.rating}</span>
+                            <div className="flex items-center space-x-2">
+                              <RatingStars rating={gym.rating} size="sm" showValue />
+                              <FavoriteButton gymId={gym.id} size="sm" />
                             </div>
                           </div>
 
