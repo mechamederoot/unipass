@@ -49,17 +49,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
+          // Only try to get user data if we have a token and backend is available
           const userData = await apiService.getCurrentUser();
           setUser(userData);
         } catch (error) {
-          // Token is invalid, clear it
+          // Token is invalid or backend is not available, clear it
           apiService.clearAuthToken();
+          console.log('Auth token cleared due to error:', error);
         }
       }
       setIsLoading(false);
     };
 
-    initAuth();
+    // Add a small delay to avoid rapid fire requests during development
+    const timer = setTimeout(initAuth, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (email: string, password: string) => {
