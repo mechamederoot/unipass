@@ -27,7 +27,7 @@ const GymProfile: React.FC = () => {
     if (id) {
       loadGymData();
     }
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadGymData = async () => {
     if (!id) return;
