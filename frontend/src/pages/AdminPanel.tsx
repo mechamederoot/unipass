@@ -13,9 +13,9 @@ interface AdminStats {
   total_gyms: number;
   total_checkins: number;
   active_subscriptions: number;
-  revenue_monthly: float;
+  revenue_monthly: number;
   new_users_this_month: number;
-  growth_percentage: float;
+  growth_percentage: number;
 }
 
 interface User {
