@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Star, Zap, Shield, Crown, CreditCard, Calendar } from 'lucide-react';
+import { Check, Star, Zap, Shield, Crown, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
