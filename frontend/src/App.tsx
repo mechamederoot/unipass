@@ -8,6 +8,10 @@ import UserProfile from './pages/UserProfile';
 import GymProfile from './pages/GymProfile';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import SubscriptionPlans from './pages/SubscriptionPlans';
+import Gamification from './pages/Gamification';
+import GymDashboard from './pages/GymDashboard';
+import AdminPanel from './pages/AdminPanel';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -37,6 +41,18 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/gym/:id" element={<GymProfile />} />
+                <Route path="/plans" element={<SubscriptionPlans />} />
+                <Route path="/gamification" element={<Gamification />} />
+                <Route path="/gym-dashboard" element={
+                  <ProtectedRoute>
+                    <GymDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                } />
               </Routes>
             </main>
             <InstallPrompt />

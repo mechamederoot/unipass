@@ -43,6 +43,13 @@ app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(gyms.router, prefix="/api/gyms", tags=["Gyms"])
 app.include_router(checkins.router, prefix="/api/checkins", tags=["Check-ins"])
 
+# New advanced routers
+from routes import gym_admin, admin, subscriptions, gamification
+app.include_router(gym_admin.router, prefix="/api/gym-admin", tags=["Gym Administration"])
+app.include_router(admin.router, prefix="/api/admin", tags=["System Administration"])
+app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["Subscriptions"])
+app.include_router(gamification.router, prefix="/api/gamification", tags=["Gamification"])
+
 
 @app.get("/")
 async def root():
