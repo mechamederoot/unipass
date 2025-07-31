@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, MapPin, Clock, Check, AlertCircle, Search, Star, Users, Loader } from 'lucide-react';
+import { QrCode, MapPin, Clock, Check, AlertCircle, Search, Users, Loader } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 import { locationService } from '../services/location';
