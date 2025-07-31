@@ -215,7 +215,7 @@ class PWAService {
     if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        await registration.sync.register(tag);
+        await (registration as any).sync.register(tag);
         
         // Store data for background sync
         const pending = JSON.parse(localStorage.getItem('backgroundSync') || '[]');
