@@ -118,14 +118,7 @@ const GymProfile: React.FC = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="absolute bottom-4 right-4">
-            <button
-              onClick={() => setShowAllImages(true)}
-              className="bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              Ver todas as fotos
-            </button>
-          </div>
+
         </div>
 
         <div className="px-4 py-6">
