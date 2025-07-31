@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useApp } from '../contexts/AppContext';
 import { BarChart, PieChart, LineChart } from '../components/Charts';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ShareButton from '../components/ShareButton';
 
 const UserProfile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -335,13 +336,28 @@ const UserProfile: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 grid md:grid-cols-2 gap-4">
-          <button className="btn-primary">
+        <div className="mt-8 grid md:grid-cols-3 gap-4">
+          <button
+            onClick={() => window.location.href = '/checkin'}
+            className="btn-primary"
+          >
             Fazer Check-in
           </button>
-          <button className="btn-secondary">
+          <button
+            onClick={() => window.location.href = '/checkin'}
+            className="btn-secondary"
+          >
             Encontrar Academias
           </button>
+          <div className="flex justify-center">
+            <ShareButton
+              title="Meu Perfil Unipass"
+              text={`Já fiz ${userStats?.total_checkins || 0} check-ins e treinei ${userStats?.total_hours_trained || 0} horas com o Unipass!`}
+              variant="secondary"
+              size="lg"
+              className="w-full flex items-center justify-center space-x-2"
+            />
+          </div>
         </div>
       </div>
     </div>
